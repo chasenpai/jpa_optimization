@@ -1,7 +1,9 @@
 package com.shop.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -13,6 +15,7 @@ import java.util.List;
 @Setter
 //엔티티에서는 가급적 setter 를 사용하지 말자 - setter 가 모두 열려있다면 변경 포인트가 많아져 유지보수가 어렵다
 @Table(name = "orders")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order {
 
     @Id
@@ -32,6 +35,8 @@ public class Order {
     //내부 메커지즘에 문제가 발생할 수 있다
     private List<OrderItem> orderItems = new ArrayList<>();
 
+    //Delivery 와 OrderItem 의 경우 Order 와 라이프 사이클이 같기 때문에 ALL 을 사용
+    //만약 다른 엔티티에서 사용할 경우 PERSIST 만 사용하는게 좋다
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "delivery_id")
     private Delivery delivery;
@@ -55,5 +60,33 @@ public class Order {
     public void setDelivery(Delivery delivery) {
         this.delivery = delivery;
         delivery.setOrder(this);
+    }
+
+    //생성 static 메서드 - 실제 주문 엔티티 생성
+    public static Order createOrder(Member member, Delivery delivery, OrderItem... orderItems) {
+        Order order = new Order();
+        order.setMember(member);
+        order.setDelivery(delivery);
+        for(OrderItem item : orderItems) {
+            order.addOrderItem(item);
+        }
+        order.setStatus(OrderStatus.ORDER);
+        order.setOrderDate(LocalDateTime.now());
+        return order;
+    }
+
+    //비즈니스 메서드
+    public void cancel() {
+        if(this.delivery.getStatus() == DeliveryStatus.COMP) {
+            throw new IllegalStateException("이미 배송완료된 상품은 취소가 불가능합니다.");
+        }
+        this.setStatus(OrderStatus.CANCEL);
+        for (OrderItem orderItem : this.orderItems) {
+            orderItem.cancel();
+        }
+    }
+
+    public int getTotalPrice() {
+        return orderItems.stream().mapToInt(OrderItem::getTotalPrice).sum();
     }
 }
