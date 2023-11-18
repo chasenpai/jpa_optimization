@@ -3,15 +3,17 @@ package com.shop.repository;
 import com.shop.domain.Member;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
+@RequiredArgsConstructor
 public class MemberRepository {
 
-    @PersistenceContext //엔티티 매니저 주입 - 복잡한 설정들이 스프링 부트를 통해 자동화 되었음
-    private EntityManager em;
+    //@PersistenceContext //엔티티 매니저 주입 - 복잡한 설정들이 스프링 부트를 통해 자동화 되었음
+    private final EntityManager em;
 
     public Long save(Member member) {
         em.persist(member);
