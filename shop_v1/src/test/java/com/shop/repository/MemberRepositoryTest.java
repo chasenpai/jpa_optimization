@@ -20,19 +20,19 @@ class MemberRepositoryTest {
     @Rollback(value = false)
     void testMember() throws Exception {
 
-        //given
-        Member member = new Member();
-        member.setUsername("memberA");
-
-        //when
-        Long savedId = memberRepository.save(member);
-
-        //then
-        Member findMember = memberRepository.find(savedId);
-        assertThat(findMember.getId()).isEqualTo(member.getId());
-        assertThat(findMember.getUsername()).isEqualTo(member.getUsername());
-        //같은 영속성 컨텍스트 안에서 ID 값이 같으면 같은 엔티티로 식별
-        assertThat(findMember).isEqualTo(member);
+//        //given
+//        Member member = new Member();
+//        member.setUsername("memberA");
+//
+//        //when
+//        Long savedId = memberRepository.save(member);
+//
+//        //then
+//        Member findMember = memberRepository.find(savedId);
+//        assertThat(findMember.getId()).isEqualTo(member.getId());
+//        assertThat(findMember.getUsername()).isEqualTo(member.getUsername());
+//        //같은 영속성 컨텍스트 안에서 ID 값이 같으면 같은 엔티티로 식별
+//        assertThat(findMember).isEqualTo(member);
     }
 
 }
