@@ -8,11 +8,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
+    show-sql: true
     properties:
       hibernate:
-      #print 로 찍어줌
-      show_sql: true
-      format_sql: true
+        format_sql: true
 
 #logging:
 #  level:

@@ -1,6 +1,6 @@
 package com.shop.repository;
 
-import com.shop.entity.Member;
+import com.shop.domain.Member;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
