@@ -55,9 +55,12 @@ public class ItemController {
         return "items/updateItemForm";
     }
 
-    @PostMapping("/items/{itemId}/edit")
-    public String updateItem(@ModelAttribute("form") BookForm form) {
+//    @PostMapping("/items/{itemId}/edit")
+    public String updateItemV1(@ModelAttribute("form") BookForm form) {
 
+        //영속성 컨텍스트가 더는 관리하지 않는 엔티티를 준영속 엔티티라고 말한다
+        //이미 DB에 저장되어 식별자가 존재하는 임의로 만들어낸 엔티티도 준영속 엔티티라 볼 수 있다
+        //준영속 상태의 엔티티를 영속 상태로 변경할 땐 Merge 를 사용해야 한다
         Book book = new Book();
         book.setId(form.getId());
         book.setName(form.getName());
@@ -67,6 +70,15 @@ public class ItemController {
         book.setIsbn(form.getIsbn());
         itemService.saveItem(book);
 
+        return "redirect:/items";
+    }
+
+    @PostMapping("/items/{itemId}/edit")
+    public String updateItemV2(@ModelAttribute("form") BookForm form) {
+        //엔티티를 변경할 땐 항상 변경 감지를 이용
+        //컨트롤러에서 엔티티를 생성하지 말고 트랜잭션이 있는 서비스 계층에 식별자와 변경할 데이터를 전달하자
+        //DTO 또는 파라미터
+        itemService.updateItem(form.getId(), form.getPrice(), form.getName(), form.getStockQuantity());
         return "redirect:/items";
     }
 
