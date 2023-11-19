@@ -1,9 +1,6 @@
 package com.shop.service;
 
-import com.shop.domain.Delivery;
-import com.shop.domain.Member;
-import com.shop.domain.Order;
-import com.shop.domain.OrderItem;
+import com.shop.domain.*;
 import com.shop.domain.item.Item;
 import com.shop.repository.ItemRepository;
 import com.shop.repository.MemberRepository;
@@ -55,5 +52,8 @@ public class OrderService {
      * 이와 같이 엔티티가 비즈니스 로직을 가지고 객체 지향의 특성을 적극 활용하는 것을
      * 도메인 모델 패턴이라고 한다
      */
+    public List<Order> findOrders(OrderSearch orderSearch) {
+        return orderRepository.findOrders(orderSearch);
+    }
 
 }

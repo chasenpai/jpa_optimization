@@ -26,7 +26,7 @@ public class OrderRepository {
 
     //JPQL 동적 쿼리를 문자로 생성하는 것은 번거롭고 실수로 인한 버그가 발생할 수 있다
     //실무에서는 QueryDsl 를 사용하자
-    public List<Order> findAll(OrderSearch orderSearch) {
+    public List<Order> findOrders(OrderSearch orderSearch) {
 
         String jpql = "select o From Order o join o.member m";
         boolean isFirstCondition = true;
