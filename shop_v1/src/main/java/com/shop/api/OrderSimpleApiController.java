@@ -4,6 +4,7 @@ import com.shop.domain.Address;
 import com.shop.domain.Order;
 import com.shop.domain.OrderSearch;
 import com.shop.domain.OrderStatus;
+import com.shop.dto.SimpleOrderQueryDto;
 import com.shop.repository.OrderRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -55,6 +56,37 @@ public class OrderSimpleApiController {
                 .map(SimpleOrderDto::new)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * V3 DTO 변환 + 페치 조인
+     * - 엔티티를 페치 조인을 사용하여 쿼리 한번에 조회
+     * - 페치 조인으로 member 와 delivery 가 이미 조회된 상태로 지연 로딩 X
+     */
+    @GetMapping("/api/v3/simple-orders")
+    public List<SimpleOrderDto> ordersV3() {
+        return orderRepository.findOrdersFetch()
+                .stream()
+                .map(SimpleOrderDto::new)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * V4 DTO 로 바로 조회
+     * - SELECT 절에서 원하는 데이터만 직접 선택하므로 성능 향샹(생각보다 미비)
+     * - 하지만 리포지토리 재사용성이 떨어지고 API 스펙에 맞춘 코드가 리포지토리에 들어간다
+     */
+    @GetMapping("/api/v4/simple-orders")
+    public List<SimpleOrderQueryDto> ordersV4() {
+        return orderRepository.findOrdersToDto();
+    }
+
+    /**
+     * 쿼리 선택 순서
+     * 1. 우선 엔티티를 DTO 로 변환하는 방법 선택
+     * 2. 필요하면 페치 조인으로 성능을 최적화 > 대부분의 이슈 해결
+     * 3. 그래도 안되면 DTO 로 직접조회
+     * 4. 최후의 방법은 JPA 가 제공하는 네이티브 쿼리 또는 스프링 JDBC Template 으로 직접 쿼리를 날린다
+     */
 
     @Data
     @AllArgsConstructor

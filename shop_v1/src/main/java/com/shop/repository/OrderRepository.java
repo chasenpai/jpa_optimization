@@ -2,6 +2,7 @@ package com.shop.repository;
 
 import com.shop.domain.Order;
 import com.shop.domain.OrderSearch;
+import com.shop.dto.SimpleOrderQueryDto;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +64,36 @@ public class OrderRepository {
         }
 
         return query.getResultList();
+    }
+
+    public List<Order> findOrdersFetch() {
+        return  em.createQuery(
+                "select " +
+                        "o from Order o " +
+                        "join fetch o.member m " +
+                        "join fetch o.delivery d ", Order.class)
+                .getResultList();
+    }
+
+    public List<SimpleOrderQueryDto> findOrdersToDto() {
+        //new 명령어를 사용해서 JPQL 의 결과를 DTO 로 즉시 반환
+        //SELECT 절에서 원하는 데이터를 직접 선택하기 때문에 성능이 향샹(생각보다 미비)
+        return  em.createQuery(
+                "select " +
+                            "new com.shop.dto.SimpleOrderQueryDto(" +
+                                    " o.id, " +
+                                    "m.name," +
+                                    "o.orderDate, " +
+                                    "o.status, " +
+                                    "d.address" +
+                            ") " +
+                        "from " +
+                            "Order o " +
+                        "join " +
+                            "o.member m " +
+                        "join " +
+                            "o.delivery d", SimpleOrderQueryDto.class)
+                .getResultList();
     }
 
 }
