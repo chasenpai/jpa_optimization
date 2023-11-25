@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.weaver.ast.Or;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -46,6 +47,32 @@ public class OrderApiController {
                 .map(OrderDto::new)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * 페치 조인 최적화
+     */
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() {
+        return orderRepository.findOrdersAndItems()
+                .stream()
+                .map(OrderDto::new)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 페이징 한계 돌파
+     */
+    @GetMapping("/api/v3-1/orders")
+    public List<OrderDto> ordersV3_1(
+            @RequestParam(value = "offset", defaultValue = "0") int offset,
+            @RequestParam(value = "limit", defaultValue = "100") int limit) {
+
+        return orderRepository.findOrdersFetchPaging(offset, limit)
+                .stream()
+                .map(OrderDto::new)
+                .collect(Collectors.toList());
+    }
+
 
     @Data
     static class OrderDto {

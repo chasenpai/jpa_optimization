@@ -75,6 +75,21 @@ public class OrderRepository {
                 .getResultList();
     }
 
+    //페이징 + 컬렉션 엔티티 함께 조회하는 방법
+    //ToOne 관계를 모두 페치 조인하고 컬렉션은 지연 로딩으로 조회한다
+    //지연 로딩 성능 최적화를 위해 @BatchSize 또는 글로벌 설정을 사용한다
+    //배치 사이즈는 100 ~ 1000을 추천한다
+    public List<Order> findOrdersFetchPaging(int offset, int limit) {
+        return  em.createQuery(
+                        "select " +
+                                "o from Order o " +
+                                "join fetch o.member m " +
+                                "join fetch o.delivery d ", Order.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
     public List<SimpleOrderQueryDto> findOrdersToDto() {
         //new 명령어를 사용해서 JPQL 의 결과를 DTO 로 즉시 반환
         //SELECT 절에서 원하는 데이터를 직접 선택하기 때문에 성능이 향샹(생각보다 미비)
@@ -94,6 +109,29 @@ public class OrderRepository {
                         "join " +
                             "o.delivery d", SimpleOrderQueryDto.class)
                 .getResultList();
+    }
+
+    //일대다 조인이 있을 경우 데이터베이스의 row 가 증가한다
+    //그 결과 같은 order 엔티티의 조회 수도 증가하게 된다 > distinct 사용
+    //SQL 에 distinct 를 추가하고, 더해서 중복된 엔티티가 조회되면 애플리케이션에서 걸러준다
+    //하이버네이트 6부터는 distinct 가 자동 적용
+    //하지만 컬렉션 페치 조인 시 페이징이 불가능하다
+    //하이버네이트가 경고 로그를 남기고 메모리에서 페이징 해버린다(매우 위험)
+    //추가로 컬렉션 페치 조인은 1개만 사용할 수 있다
+    public List<Order> findOrdersAndItems() {
+        return  em.createQuery(
+                "select " +
+                            "distinct o " +
+                        "from " +
+                            "Order o " +
+                        "join fetch " +
+                            "o.member m " +
+                        "join fetch " +
+                            "o.delivery d " +
+                        "join fetch " +
+                            "o.orderItems oi " +
+                        "join fetch " +
+                            "oi.item i", Order.class).getResultList();
     }
 
 }

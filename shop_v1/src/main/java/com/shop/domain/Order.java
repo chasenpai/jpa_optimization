@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public class Order {
     @JoinColumn(name = "member_id")
     private Member member;
 
+//    @BatchSize(size = 1000)
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     //컬렉션은 필드에서 초기화 하자 - null 문제에서 안전해지고 하이버네이트는 엔티티를 영속화 할 때
     //컬렉션을 감싸서 하이버네이트가 제공하는 내장 컬렉션으로 변경하기 때문에 하이버네이트
