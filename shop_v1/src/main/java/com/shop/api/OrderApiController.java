@@ -5,6 +5,7 @@ import com.shop.dto.OrderFlatDto;
 import com.shop.dto.OrderItemQueryDto;
 import com.shop.dto.OrderQueryDto;
 import com.shop.repository.OrderRepository;
+import com.shop.service.OrderQueryService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.weaver.ast.Or;
@@ -13,18 +14,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
 
 @RestController
 @RequiredArgsConstructor
 public class OrderApiController {
 
     private final OrderRepository orderRepository;
+    private final OrderQueryService orderQueryService;
 
     //컬렉션 조회 최적화
 
@@ -41,6 +40,20 @@ public class OrderApiController {
             orderItems.stream().forEach(o -> o.getItem().getName());
         }
         return orders;
+    }
+
+    /**
+     * OSIV(Open-Session-In-View)
+     * OSIV 전략은 최초 데이터베이스 커넥션 시작 시점부터 API 응답 또는
+     * 뷰 렌더링이 끝날 때 까지 영속성 컨텍스트와 데이터베이스 커넥션을 유지한다
+     * 지연 로딩은 영속성 컨텍스트가 살아있어야 가능하고 영속성 컨텍스트는 기본적으로
+     * 데이터베이스 커넥션을 유지한다. 이것 자체가 장점이자 단점이다
+     *
+     * OSIV 전략을 사용하지 않는다면 지연 로딩을 트랜잭션 안에서 처리해야 한다
+     */
+    @GetMapping("/api/v1-1/orders")
+    public List<Order> orderV1_1() {
+        return orderQueryService.getOrders();
     }
 
     /**
@@ -104,6 +117,20 @@ public class OrderApiController {
         return orderRepository.findOrdersAndItemsToDtoV3();
     }
 
+    /**
+     * 권장 순서
+     * 1. 엔티티 조회 방식으로 우선 접근
+     * 1-1. 페치 조인으로 쿼리 수 최적화
+     * 1-2. 컬렉션 최적화 -> 페이징 필요 시 batch_size 로 최적화, 페이징 필요 없으면 페치 조인
+     *
+     * 2. 엔티티 조회 방식으로 해결안되면 DTO 조회 방식 사용
+     * 3. DTO 조회 방식으로도 안된다면 Native Query or JdbcTemplate
+     *
+     * 엔티티 조회 방식은 페치 조인이나 배치 사이즈 등으로 코드를 거의 수정하지 않고 최적화 시도를 할 수 있다
+     * 그러나 DTO 직접 조회의 경우 성능 최적화 방식을 변경할 때 많은 코드를 변경해야 한다
+     * 엔티티 조회 방식은 JPA 가 많은 부분을 최적화 해주지만 DTO 조회 방식은 SQL 을 직접 다루는 것과 유사하기
+     * 코드 복잡도와 성능 사이에서 줄타기를 해야 한다
+     */
 
     @Data
     static class OrderDto {
