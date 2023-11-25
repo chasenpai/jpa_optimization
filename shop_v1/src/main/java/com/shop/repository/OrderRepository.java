@@ -2,6 +2,7 @@ package com.shop.repository;
 
 import com.shop.domain.Order;
 import com.shop.domain.OrderSearch;
+import com.shop.dto.OrderFlatDto;
 import com.shop.dto.OrderItemQueryDto;
 import com.shop.dto.OrderQueryDto;
 import com.shop.dto.SimpleOrderQueryDto;
@@ -229,6 +230,35 @@ public class OrderRepository {
                                     "oi.order.id in :orderIds", OrderItemQueryDto.class)
                 .setParameter("orderIds", orderIds)
                 .getResultList();
+    }
+
+    //한방 쿼리
+    //쿼리는 한번이지만 조인으로 인해 상황에 따라 느려질 수 있다
+    //페이징 불가능
+    //추가로 API 스펙과 맞추려면 추가로 애플리케이션에서 작업이 필요하다
+    public List<OrderFlatDto> findOrdersAndItemsToDtoV3() {
+        return em.createQuery(
+                "select " +
+                            "new com.shop.dto.OrderFlatDto( " +
+                            "o.id, " +
+                            "m.name, " +
+                            "o.orderDate, " +
+                            "o.status, " +
+                            "d.address, " +
+                            "i.name, " +
+                            "oi.orderPrice, " +
+                            "oi.count " +
+                        ") " +
+                        "from " +
+                            "Order o " +
+                        "join " +
+                            "o.member m " +
+                        "join " +
+                            "o.delivery d " +
+                        "join " +
+                            "o.orderItems oi " +
+                        "join " +
+                            "oi.item i ", OrderFlatDto.class).getResultList();
     }
 
 }

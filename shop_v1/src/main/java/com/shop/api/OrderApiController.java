@@ -1,6 +1,8 @@
 package com.shop.api;
 
 import com.shop.domain.*;
+import com.shop.dto.OrderFlatDto;
+import com.shop.dto.OrderItemQueryDto;
 import com.shop.dto.OrderQueryDto;
 import com.shop.repository.OrderRepository;
 import lombok.Data;
@@ -14,6 +16,9 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
 
 @RestController
 @RequiredArgsConstructor
@@ -88,6 +93,15 @@ public class OrderApiController {
     @GetMapping("/api/v5/orders")
     public List<OrderQueryDto> orderV5() {
         return orderRepository.findOrdersAndItemsToDtoV2();
+    }
+
+    /**
+     * DTO 직접 조회 한방 쿼리
+     * - API 스펙과 맞추려면 애플리케이션 내에서 추가적인 작업 필요
+     */
+    @GetMapping("/api/v6/orders")
+    public List<OrderFlatDto> orderV6() {
+        return orderRepository.findOrdersAndItemsToDtoV3();
     }
 
 
