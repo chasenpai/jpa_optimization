@@ -2,6 +2,8 @@ package com.shop.repository;
 
 import com.shop.domain.Order;
 import com.shop.domain.OrderSearch;
+import com.shop.dto.OrderItemQueryDto;
+import com.shop.dto.OrderQueryDto;
 import com.shop.dto.SimpleOrderQueryDto;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -132,6 +136,99 @@ public class OrderRepository {
                             "o.orderItems oi " +
                         "join fetch " +
                             "oi.item i", Order.class).getResultList();
+    }
+
+    //ToOne 관계는 조인해도 데이터 row 가 증가하지 않음
+    //ToMany 관계는 조인하면 row 수가 증가
+    //ToOne 관계들을 먼저 조회하고 ToMany 관계는 별도로 처리
+    //루트 1번, 컬렉션 N번
+    //단건 조회에서 많이 사용하는 방식
+    public List<OrderQueryDto> findOrdersAndItemsToDto() {
+
+        List<OrderQueryDto> orders = getOrders();
+        orders.forEach(o -> {
+            List<OrderItemQueryDto> orderItems = getOrderItems(o);
+            o.setOrderItems(orderItems);
+        });
+
+        return orders;
+    }
+
+    private List<OrderQueryDto> getOrders() {
+        return em.createQuery(
+                "select " +
+                            "new com.shop.dto.OrderQueryDto( " +
+                            "o.id, " +
+                            "m.name," +
+                            "o.orderDate, " +
+                            "o.status, " +
+                            "d.address" +
+                        ") " +
+                        "from " +
+                            "Order o " +
+                        "join " +
+                            "o.member m " +
+                        "join " +
+                            "o.delivery d ", OrderQueryDto.class).getResultList();
+    }
+
+    private List<OrderItemQueryDto> getOrderItems(OrderQueryDto o) {
+        return em.createQuery(
+                        "select " +
+                                    "new com.shop.dto.OrderItemQueryDto( " +
+                                    "oi.order.id, " +
+                                    "i.name, " +
+                                    "oi.orderPrice, " +
+                                    "oi.count " +
+                                ") " +
+                                "from " +
+                                    "OrderItem oi " +
+                                "join " +
+                                    "oi.item i " +
+                                "where " +
+                                    "oi.order.id =: orderId", OrderItemQueryDto.class)
+                .setParameter("orderId", o.getOrderId())
+                .getResultList();
+    }
+
+    //식별자로 ToMany 관계인 OrderItem 을 in 절로 조회
+    //루트 1번, 컬렉션 1번
+    //MAP 을 사용하여 성능 향상
+    public List<OrderQueryDto> findOrdersAndItemsToDtoV2() {
+
+        List<OrderQueryDto> orders = getOrders();
+
+        List<Long> orderIds = orders.stream()
+                .map(OrderQueryDto::getOrderId)
+                .collect(Collectors.toList());
+
+        List<OrderItemQueryDto> orderItems = getOrderItems(orderIds);
+
+        Map<Long, List<OrderItemQueryDto>> orderItemMap = orderItems.stream()
+                .collect(Collectors.groupingBy(OrderItemQueryDto::getOrderId));
+
+        orders.forEach(o -> o.setOrderItems(orderItemMap.get(o.getOrderId())));
+
+        return orders;
+    }
+
+    private List<OrderItemQueryDto> getOrderItems(List<Long> orderIds) {
+        return em.createQuery(
+                        "select " +
+                                    "new com.shop.dto.OrderItemQueryDto( " +
+                                    "oi.order.id, " +
+                                    "i.name, " +
+                                    "oi.orderPrice, " +
+                                    "oi.count " +
+                                ") " +
+                                "from " +
+                                    "OrderItem oi " +
+                                "join " +
+                                    "oi.item i " +
+                                "where " +
+                                    "oi.order.id in :orderIds", OrderItemQueryDto.class)
+                .setParameter("orderIds", orderIds)
+                .getResultList();
     }
 
 }

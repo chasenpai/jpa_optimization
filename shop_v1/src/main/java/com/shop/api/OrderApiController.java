@@ -1,6 +1,7 @@
 package com.shop.api;
 
 import com.shop.domain.*;
+import com.shop.dto.OrderQueryDto;
 import com.shop.repository.OrderRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -71,6 +72,22 @@ public class OrderApiController {
                 .stream()
                 .map(OrderDto::new)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * DTO 직접 조회
+     */
+    @GetMapping("/api/v4/orders")
+    public List<OrderQueryDto> orderV4() {
+        return orderRepository.findOrdersAndItemsToDto();
+    }
+
+    /**
+     * DTO 직접 조회 최적화
+     */
+    @GetMapping("/api/v5/orders")
+    public List<OrderQueryDto> orderV5() {
+        return orderRepository.findOrdersAndItemsToDtoV2();
     }
 
 
